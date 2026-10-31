@@ -119,6 +119,19 @@ public sealed class GameProcessTracker : IGameProcessTracker, IDisposable
     }
 
     /// <inheritdoc/>
+    public bool IsProfileRunning(string profileId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileId);
+        lock (_processLock)
+        {
+            RestoreProcessesTrackedByOtherLaunchersLocked();
+            RemoveExitedProcessesLocked();
+            return _processes.Values.Any(tracked =>
+                string.Equals(tracked.Info.ProfileId, profileId, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    /// <inheritdoc/>
     public bool IsGameRunning()
     {
         lock (_processLock)

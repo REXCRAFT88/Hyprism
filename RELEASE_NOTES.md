@@ -5,6 +5,14 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Hyprism Together preview
 
+## Preview 2
+
+- All players can launch from one installed game instance and branch.
+- Account data uses the original Together layout under `%APPDATA%/Hytale/SplitScreen/Accounts/<player UUID>/<branch>/UserData`.
+- Existing Together account folders are reused. Previous Hyprism instance data is not moved or merged automatically.
+- Running game processes share an installation identity for update, repair, and deletion guards. A profile cannot be launched twice at the same time.
+- Together refuses an incomplete, stale, or pending-update installation. It does not modify shared installation files while sibling games are running.
+
 This preview adds a native Windows Together screen to the REXCRAFT88 Hyprism fork.
 
 ## Included

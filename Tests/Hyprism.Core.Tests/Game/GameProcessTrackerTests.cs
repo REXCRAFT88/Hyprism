@@ -11,6 +11,42 @@ namespace Hyprism.Core.Tests.Game;
 public sealed class GameProcessTrackerTests
 {
     [Fact]
+    public async Task Tracker_AllowsDistinctProfileProcessesToShareAnInstallation()
+    {
+        using var processA = StartLongRunningProcess();
+        using var processB = StartLongRunningProcess();
+        using var tracker = new GameProcessTracker();
+        try
+        {
+            tracker.TrackGameProcess(processA, "shared-release", "profile-a");
+            tracker.TrackGameProcess(processB, "shared-release", "profile-b");
+
+            Assert.True(tracker.IsInstanceRunning("shared-release"));
+            Assert.True(tracker.IsProfileRunning("profile-a"));
+            Assert.True(tracker.IsProfileRunning("profile-b"));
+            Assert.False(tracker.IsProfileRunning("profile-c"));
+            Assert.Equal(2, tracker.GetRunningProcesses().Count);
+            Assert.All(tracker.GetRunningProcesses(), process => Assert.Equal("shared-release", process.InstanceId));
+
+            processA.Kill(entireProcessTree: true);
+            var timeout = Stopwatch.StartNew();
+            while (tracker.IsProfileRunning("profile-a") && timeout.Elapsed < TimeSpan.FromSeconds(5))
+                await Task.Delay(20);
+            Assert.True(tracker.IsInstanceRunning("shared-release"));
+            Assert.False(tracker.IsProfileRunning("profile-a"));
+            Assert.True(tracker.IsProfileRunning("profile-b"));
+            Assert.Single(tracker.GetRunningProcesses());
+        }
+        finally
+        {
+            foreach (var process in new[] { processA, processB })
+            {
+                try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+            }
+        }
+    }
+
+    [Fact]
     public void PersistentRegistry_AllowsSmallStartTimeVariationButRejectsStaleIdentity()
     {
         var appDirectory = Path.Combine(Path.GetTempPath(), "HyprismProcessTrackerTests_" + Guid.NewGuid());

@@ -49,6 +49,7 @@ public sealed partial class InstancesViewModel : ObservableObject, IDisposable
     private bool _suppressInstancesChanged;
     private readonly Dictionary<string, int> _busyInstanceCounts =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DateTime> _gameStartedAtUtc = new(StringComparer.OrdinalIgnoreCase);
     private readonly ObservableRangeCollection<InstanceItemViewModel> _allInstances = [];
     private readonly ObservableRangeCollection<InstanceVersionItemViewModel> _availableInstanceVersions = [];
     private readonly ObservableRangeCollection<InstanceModItemViewModel> _installedMods = [];
@@ -62,7 +63,6 @@ public sealed partial class InstancesViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _instanceVersionsCancellation;
     private readonly DispatcherTimer _managedInstanceActionTimer;
     private DateTime? _managedInstanceActionStartedAtUtc;
-    private readonly Dictionary<string, DateTime> _gameStartedAtUtc = new(StringComparer.OrdinalIgnoreCase);
     private bool _isManagedInstanceRunning;
     private bool _isManagedInstanceSelectionSwitching;
     private long _managedInstanceSelectionGeneration;
@@ -4024,8 +4024,8 @@ public sealed partial class InstancesViewModel : ObservableObject, IDisposable
         if (_managedInstance is null)
             return null;
 
-        if (_gameStartedAtUtc.TryGetValue(_managedInstance.Id, out var startedAt))
-            return startedAt;
+        if (_gameStartedAtUtc.TryGetValue(_managedInstance.Id, out var cachedStart))
+            return cachedStart;
 
         var process = _gameProcess.GetRunningProcesses().FirstOrDefault(process =>
             string.Equals(process.InstanceId, _managedInstance.Id, StringComparison.OrdinalIgnoreCase));
@@ -4126,7 +4126,9 @@ public sealed partial class InstancesViewModel : ObservableObject, IDisposable
         var process = e.Process;
         Dispatcher.UIThread.Post(() =>
         {
-            _gameStartedAtUtc[process.InstanceId] = process.ProcessStartedAtUtc;
+            if (!_gameStartedAtUtc.TryGetValue(process.InstanceId, out var earliestStart)
+                || process.ProcessStartedAtUtc < earliestStart)
+                _gameStartedAtUtc[process.InstanceId] = process.ProcessStartedAtUtc;
             foreach (var item in AllInstances.Where(item => item.Id == process.InstanceId))
                 item.IsRunning = true;
             _isManagedInstanceCancellationArmed = false;
@@ -4156,7 +4158,18 @@ public sealed partial class InstancesViewModel : ObservableObject, IDisposable
             CanCancelActivity = false;
             EndInstanceActivity(process.InstanceId);
 
-            _gameStartedAtUtc.Remove(process.InstanceId);
+            var siblingStart = (_gameProcess.GetRunningProcesses() ?? [])
+                .Where(active => string.Equals(
+                    active.InstanceId,
+                    process.InstanceId,
+                    StringComparison.OrdinalIgnoreCase))
+                .Select(active => (DateTime?)active.ProcessStartedAtUtc)
+                .Min();
+            if (siblingStart is { } remainingStart)
+                _gameStartedAtUtc[process.InstanceId] = remainingStart;
+            else if (!_gameProcess.IsInstanceRunning(process.InstanceId))
+                _gameStartedAtUtc.Remove(process.InstanceId);
+
             foreach (var item in AllInstances.Where(item => item.Id == process.InstanceId))
                 item.IsRunning = _gameProcess.IsInstanceRunning(process.InstanceId);
             if (string.Equals(_managedInstance?.Id, process.InstanceId, StringComparison.OrdinalIgnoreCase))

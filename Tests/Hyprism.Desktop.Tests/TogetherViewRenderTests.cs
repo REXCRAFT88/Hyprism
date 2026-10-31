@@ -35,7 +35,7 @@ public sealed class TogetherViewRenderTests
             File.WriteAllText(bindingsPath, """
                 [
                   { "ProfileId": "profile-hytale", "InstanceId": "instance-aurora", "ControllerId": "kbm", "TouchpadMouseEnabled": true, "EscapeButtonMode": 1, "Color": "electric-cyan" },
-                  { "ProfileId": "profile-guest", "InstanceId": "instance-snapshot", "ControllerId": "fixture-controller", "TouchpadMouseEnabled": true, "EscapeButtonMode": 1, "Color": "warm-amber" }
+                  { "ProfileId": "profile-guest", "InstanceId": "instance-aurora", "ControllerId": "fixture-controller", "TouchpadMouseEnabled": true, "EscapeButtonMode": 1, "Color": "warm-amber" }
                 ]
                 """);
             using var viewModel = MainWindowViewModelFactory.Create(

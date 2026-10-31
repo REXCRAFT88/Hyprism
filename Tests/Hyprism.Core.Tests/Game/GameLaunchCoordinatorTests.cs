@@ -103,6 +103,52 @@ public sealed class GameLaunchCoordinatorTests
     }
 
     [Fact]
+    public async Task LaunchProfileAsync_AllowsAnotherProfileOnSameCurrentInstallation()
+    {
+        var instance = CreateInstalledInstance();
+        string? observedProfile = null;
+        var sawIsolatedData = false;
+        _gameProcess.Setup(service => service.IsInstanceRunning(instance.Id)).Returns(true);
+        _gameProcess.Setup(service => service.IsProfileRunning("profile-b")).Returns(false);
+        _instances.Setup(service => service.FindInstanceById(instance.Id)).Returns(instance);
+        _instances.Setup(service => service.GetInstancePathById(instance.Id)).Returns("/game");
+        _instances.Setup(service => service.IsClientPresent("/game")).Returns(true);
+        _instances.Setup(service => service.GetInstanceMeta("/game")).Returns(new InstanceMeta
+        {
+            Branch = "release",
+            Version = 42,
+            InstalledVersion = 42
+        });
+        _gameSession
+            .Setup(service => service.DownloadAndLaunchInstanceAsync(instance.Id, It.IsAny<AuthUriPresenter?>()))
+            .Callback<string, AuthUriPresenter?>((_, _) =>
+            {
+                observedProfile = ProfileLaunchContext.ProfileId;
+                sawIsolatedData = ProfileLaunchContext.UsesIsolatedAccountData;
+            })
+            .ReturnsAsync(new DownloadProgress { Success = true });
+
+        await CreateSubject().LaunchProfileAsync(instance.Id, "profile-b");
+
+        Assert.Equal("profile-b", observedProfile);
+        Assert.True(sawIsolatedData);
+        _gameSession.Verify(service => service.DownloadAndLaunchInstanceAsync(instance.Id, It.IsAny<AuthUriPresenter?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LaunchProfileAsync_RejectsSameProfileAlreadyRunningOnAnyInstallation()
+    {
+        var instance = CreateInstalledInstance();
+        _gameProcess.Setup(service => service.IsProfileRunning("profile-a")).Returns(true);
+        _instances.Setup(service => service.FindInstanceById(instance.Id)).Returns(instance);
+
+        await CreateSubject().LaunchProfileAsync(instance.Id, "profile-a");
+
+        _gameSession.Verify(service => service.DownloadAndLaunchInstanceAsync(
+            It.IsAny<string>(), It.IsAny<AuthUriPresenter?>()), Times.Never);
+    }
+
+    [Fact]
     public async Task LaunchAsync_MapsMirrorFailureToStableExitCode()
     {
         var instance = CreateInstalledInstance();

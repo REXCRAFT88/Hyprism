@@ -37,6 +37,7 @@ public class GameInstallationWorkflow : IGameInstallationWorkflow
     private readonly IProgressReporter _progress;
     private readonly IPatchManager _patchManager;
     private readonly IGameLauncher _gameLauncher;
+    private readonly IGameProcessTracker? _gameProcess;
     private readonly HttpClient _httpClient;
     private readonly string _downloadsCacheDirectory;
 
@@ -58,6 +59,7 @@ public class GameInstallationWorkflow : IGameInstallationWorkflow
     /// <param name="gameLauncher">Launcher for the game process</param>
     /// <param name="httpClient">HTTP client for network requests</param>
     /// <param name="appPath">Application path configuration</param>
+    /// <param name="gameProcess">Process tracker used to prevent changes to an installation while games are running.</param>
     public GameInstallationWorkflow(
         IConfigStore configStore,
         IInstanceRepository instances,
@@ -69,7 +71,8 @@ public class GameInstallationWorkflow : IGameInstallationWorkflow
         IPatchManager patchManager,
         IGameLauncher gameLauncher,
         HttpClient httpClient,
-        AppPathConfiguration appPath)
+        AppPathConfiguration appPath,
+        IGameProcessTracker? gameProcess = null)
     {
         _configStore = configStore;
         _instances = instances;
@@ -80,6 +83,7 @@ public class GameInstallationWorkflow : IGameInstallationWorkflow
         _progress = progress;
         _patchManager = patchManager;
         _gameLauncher = gameLauncher;
+        _gameProcess = gameProcess;
         _httpClient = httpClient;
         GameDownloadCacheMigration.Migrate(appPath.AppDir);
         _downloadsCacheDirectory = LauncherCachePaths.GetGameDownloadsDirectory(appPath.AppDir);
@@ -161,6 +165,29 @@ public class GameInstallationWorkflow : IGameInstallationWorkflow
             var installedVersionMatchesSelection = instanceMeta is null
                 || instanceMeta.InstalledVersion <= 0
                 || instanceMeta.InstalledVersion == targetVersion;
+
+            if (_gameProcess?.IsInstanceRunning(selectedInstance.Id) == true)
+            {
+                var safeSharedProfileLaunch = ProfileLaunchContext.UsesIsolatedAccountData
+                    && gameIsInstalled
+                    && !hasPendingUpdate
+                    && instanceMeta is not null
+                    && instanceMeta.InstalledVersion == targetVersion
+                    && string.Equals(instanceMeta.Branch, branch, StringComparison.OrdinalIgnoreCase);
+                if (!safeSharedProfileLaunch)
+                {
+                    const string error = "This installation is in use by a running game. Stop every game using it before installing or updating.";
+                    _progress.ReportError("download", "Installation is in use", error, selectedInstance.Id);
+                    return new DownloadProgress { Error = error };
+                }
+
+                return await HandleInstalledGameAsync(
+                    versionPath,
+                    branch,
+                    selectedInstance.Id,
+                    authorizationUriPresenter,
+                    cts.Token);
+            }
 
             if (gameIsInstalled && !hasPendingUpdate && installedVersionMatchesSelection)
             {

@@ -19,7 +19,7 @@ public sealed class GameLaunchCoordinator(
     IProgressReporter progress) : IGameLaunchCoordinator
 {
     private static readonly SemaphoreSlim ProfileLaunchGate = new(1, 1);
-    private readonly HashSet<string> _launchingInstanceIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _launchingOperationIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _launchLock = new();
     private const int ExitSuccess = 0;
     private const int ErrorNotInstalled = 11;
@@ -34,6 +34,12 @@ public sealed class GameLaunchCoordinator(
     public async Task LaunchAsync(
         string? instanceId = null,
         AuthUriPresenter? authorizationUriPresenter = null)
+        => await LaunchCoreAsync(instanceId, authorizationUriPresenter, allowSharedInstallation: false);
+
+    private async Task LaunchCoreAsync(
+        string? instanceId,
+        AuthUriPresenter? authorizationUriPresenter,
+        bool allowSharedInstallation)
     {
         // Install and update remain separate UI actions, so this operation launches
         // only an instance whose selected version is already installed.
@@ -45,9 +51,16 @@ public sealed class GameLaunchCoordinator(
             : progress.BeginOperation(selectedInstance.Id);
         if (selectedInstance != null)
         {
-            if (processService.IsInstanceRunning(selectedInstance.Id))
+            var profileId = allowSharedInstallation ? ProfileLaunchContext.ProfileId : null;
+            var operationId = allowSharedInstallation
+                ? $"{selectedInstance.Id}::{profileId}"
+                : selectedInstance.Id;
+            if ((allowSharedInstallation && (string.IsNullOrWhiteSpace(profileId) || processService.IsProfileRunning(profileId)))
+                || (!allowSharedInstallation && processService.IsInstanceRunning(selectedInstance.Id)))
             {
-                Logger.Warning("Game", $"Game launch request ignored - instance {selectedInstance.Id} is already running");
+                Logger.Warning("Game", allowSharedInstallation
+                    ? $"Game launch request ignored - profile {profileId} is already running"
+                    : $"Game launch request ignored - instance {selectedInstance.Id} is already running");
                 return;
             }
 
@@ -63,11 +76,31 @@ public sealed class GameLaunchCoordinator(
                 return;
             }
 
+            if (allowSharedInstallation)
+            {
+                var meta = string.IsNullOrEmpty(versionPath) ? null : instances.GetInstanceMeta(versionPath);
+                if (string.IsNullOrEmpty(versionPath)
+                    || !instances.IsClientPresent(versionPath)
+                    || meta is null
+                    || meta.PendingVersion > 0
+                    || meta.InstalledVersion != selectedInstance.Version
+                    || !string.Equals(meta.Branch, selectedInstance.Branch, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logger.Warning("Game", $"Together launch rejected for {selectedInstance.Id}: the installation must be complete, current, and have no pending update");
+                    progress.ReportError(
+                        "launch",
+                        "Game installation needs attention",
+                        "Install or update this instance, then retry the Together session.",
+                        selectedInstance.Id);
+                    return;
+                }
+            }
+
             lock (_launchLock)
             {
-                if (!_launchingInstanceIds.Add(selectedInstance.Id))
+                if (!_launchingOperationIds.Add(operationId))
                 {
-                    Logger.Warning("Game", $"Game launch request ignored - instance {selectedInstance.Id} is already being prepared");
+                    Logger.Warning("Game", $"Game launch request ignored - operation {operationId} is already being prepared");
                     return;
                 }
             }
@@ -109,7 +142,9 @@ public sealed class GameLaunchCoordinator(
             if (selectedInstance is not null)
             {
                 lock (_launchLock)
-                    _launchingInstanceIds.Remove(selectedInstance.Id);
+                    _launchingOperationIds.Remove(allowSharedInstallation
+                        ? $"{selectedInstance.Id}::{ProfileLaunchContext.ProfileId}"
+                        : selectedInstance.Id);
             }
         }
     }
@@ -125,8 +160,8 @@ public sealed class GameLaunchCoordinator(
         await ProfileLaunchGate.WaitAsync();
         try
         {
-            using var profile = ProfileLaunchContext.Use(profileId);
-            await LaunchAsync(instanceId, authorizationUriPresenter);
+            using var profile = ProfileLaunchContext.Use(profileId, useIsolatedAccountData: true);
+            await LaunchCoreAsync(instanceId, authorizationUriPresenter, allowSharedInstallation: true);
         }
         finally
         {

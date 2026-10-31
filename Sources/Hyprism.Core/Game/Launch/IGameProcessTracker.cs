@@ -55,6 +55,11 @@ public interface IGameProcessTracker
     /// </summary>
     bool IsInstanceRunning(string instanceId);
 
+    /// <summary>Checks whether a process for the specified launcher profile is running.</summary>
+    /// <param name="profileId">The stable profile identity used for a game launch.</param>
+    /// <returns><see langword="true"/> when the profile has a running game process.</returns>
+    bool IsProfileRunning(string profileId);
+
     /// <summary>
     /// Checks if the tracked game process is currently running
     /// </summary>

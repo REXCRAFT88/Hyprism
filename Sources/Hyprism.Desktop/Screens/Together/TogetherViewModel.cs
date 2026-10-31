@@ -359,11 +359,6 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
                 player.Color));
         }
 
-        if (selectedPlayers.Select(player => player.InstanceId).Distinct(StringComparer.Ordinal).Count() != selectedPlayers.Count)
-        {
-            error = _localizer["together.duplicateInstance"];
-            return false;
-        }
         if (Players.Select(player => player.ControllerId).Where(id => id != "kbm").Distinct(StringComparer.OrdinalIgnoreCase).Count()
             != Players.Count(player => player.ControllerId != "kbm"))
         {
@@ -503,7 +498,7 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
             ?? player.Profiles.FirstOrDefault(item => Players.All(existing => existing.SelectedProfile?.Id != item.Id))
             ?? player.Profiles.FirstOrDefault();
         player.SelectedInstance = player.Instances.FirstOrDefault(item => item.Id == instanceId)
-            ?? player.Instances.FirstOrDefault(item => Players.All(existing => existing.SelectedInstance?.Id != item.Id))
+            ?? Players.Select(existing => existing.SelectedInstance).FirstOrDefault(item => item is not null)
             ?? player.Instances.FirstOrDefault();
         player.ControllerId = controllerId ?? (Players.Count == 0 ? "kbm" : Controllers.FirstOrDefault()?.Id ?? string.Empty);
         player.TouchpadMouseEnabled = touchpadMouseEnabled;

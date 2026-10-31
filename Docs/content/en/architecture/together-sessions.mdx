@@ -8,7 +8,9 @@ Each player binding stores a stable Hyprism profile ID, installed instance ID, c
 
 `ProfileLaunchContext` carries an explicit profile ID through asynchronous launch operations. The launcher resolves that ID instead of consulting mutable selected-profile UI state. The authenticator caches session objects by profile ID and resolves its current profile folder in the same ambient context. Together reloads and refreshes each account separately and checks that the returned owner ID still matches the profile's stored session before launching. It rejects repeated owner IDs in one session, requiring distinct official login accounts.
 
-Each player must choose a different installed instance so the game receives its own writable data directory. Players must use the same branch. The session starts launches sequentially, then locates the tracked process by both instance ID and profile ID.
+Players may share an installed instance as long as they use the same branch and game version. The game receives the same installation path through `--app-dir` and a private writable path through `--user-dir`. The data path reuses Together's established `%APPDATA%/Hytale/SplitScreen/Accounts/<player UUID>/<branch>/UserData` layout. Existing folders are used in place and older Hyprism instance data is never moved or merged automatically.
+
+The installation ID remains on every tracked process, so the instance screen sees every sibling game and blocks update, repair, or removal while any player uses the installation. The profile ID is the launch identity. Together rejects a second process for the same launcher profile but permits another profile to use the same installed files. It only launches a complete installation at the selected version with no pending update. During a sibling launch, official client patch restore is rejected if files are patched and shared AOT caches are not invalidated.
 
 ## Window and controller lifecycle
 

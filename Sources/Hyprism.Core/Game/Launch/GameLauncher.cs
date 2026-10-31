@@ -254,6 +254,17 @@ public partial class GameLauncher : IGameLauncher
 
         ct.ThrowIfCancellationRequested();
 
+        var installationHasRunningClients = !string.IsNullOrWhiteSpace(instanceId)
+            && _gameProcess.IsInstanceRunning(instanceId);
+        if (ProfileLaunchContext.UsesIsolatedAccountData
+            && installationHasRunningClients
+            && isOfficialProfile
+            && (ClientPatcher.IsClientPatched(versionPath) || ClientPatcher.IsServerJarPatched(versionPath)))
+        {
+            throw new InvalidOperationException(
+                "This shared installation has patched files while another player is using it. Stop all game processes and restore the official files before starting Together.");
+        }
+
         await PatchClientIfNeededAsync(versionPath, isOfficialProfile, onlineMode, configuredAuthDomain, localNode);
 
         ct.ThrowIfCancellationRequested();
@@ -276,10 +287,21 @@ public partial class GameLauncher : IGameLauncher
         string javaPath = ResolveJavaPath();
         if (!File.Exists(javaPath)) throw new Exception($"Java not found at {javaPath}");
 
-        string userDataDir = _instances.GetInstanceUserDataPath(versionPath);
+        string userDataDir = ProfileLaunchContext.UsesIsolatedAccountData
+            ? ProfileLaunchContext.GetAccountUserDataPath(currentProfile.UUID, branch)
+            : _instances.GetInstanceUserDataPath(versionPath);
+        var fullUserDataPath = Path.GetFullPath(userDataDir);
+        var fullInstallationPath = Path.GetFullPath(versionPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        if (ProfileLaunchContext.UsesIsolatedAccountData
+            && fullUserDataPath.StartsWith(fullInstallationPath, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Isolated account data must be outside the shared game installation.");
+        }
         Directory.CreateDirectory(userDataDir);
 
-        InvalidateAotCacheIfNeeded(versionPath);
+        if (!installationHasRunningClients)
+            InvalidateAotCacheIfNeeded(versionPath);
 
         EnsureClientExecutableOnUnix(executable);
 

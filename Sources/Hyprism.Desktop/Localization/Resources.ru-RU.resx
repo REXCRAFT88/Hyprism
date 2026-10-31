@@ -340,11 +340,11 @@ SPDX-License-Identifier: GPL-3.0-only
   <data name="together.startFailed" xml:space="preserve"><value>Не удалось запустить сессию:</value></data>
   <data name="together.sessionStopped" xml:space="preserve"><value>Ввод контроллеров отключён, отслеживаемые окна игры восстановлены.</value></data>
   <data name="together.playerCountError" xml:space="preserve"><value>Выберите от одного до четырёх игроков.</value></data>
-  <data name="together.selectAll" xml:space="preserve"><value>Выберите официальный аккаунт и установленный экземпляр для каждого игрока.</value></data>
+  <data name="together.selectAll" xml:space="preserve"><value>Выберите официальный аккаунт и соответствующую установленную ветку для каждого игрока.</value></data>
   <data name="together.selectController" xml:space="preserve"><value>Назначьте контроллер или клавиатуру и мышь каждому игроку.</value></data>
   <data name="together.duplicateProfile" xml:space="preserve"><value>Для каждого игрока требуется отдельный профиль официального аккаунта.</value></data>
   <data name="together.duplicateAccount" xml:space="preserve"><value>Каждому игроку нужен отдельный официальный аккаунт Hytale.</value></data>
-  <data name="together.duplicateInstance" xml:space="preserve"><value>Выберите отдельный установленный экземпляр для каждого игрока, чтобы разделить данные.</value></data>
+  <data name="together.duplicateInstance" xml:space="preserve"><value>Игроки могут использовать один установленный экземпляр. Hyprism хранит данные Together в отдельных папках профилей.</value></data>
   <data name="together.duplicateController" xml:space="preserve"><value>Назначайте каждый геймпад только одному игроку.</value></data>
   <data name="together.oneKeyboard" xml:space="preserve"><value>Клавиатуру и мышь может использовать только один игрок.</value></data>
   <data name="together.sameBranch" xml:space="preserve"><value>У всех игроков должна быть выбрана одна ветка игры.</value></data>

@@ -189,7 +189,8 @@ public static partial class Bootstrapper
                     sp.GetRequiredService<IPatchManager>(),
                     sp.GetRequiredService<IGameLauncher>(),
                     sp.GetRequiredService<HttpClient>(),
-                    sp.GetRequiredService<AppPathConfiguration>()));
+                    sp.GetRequiredService<AppPathConfiguration>(),
+                    sp.GetRequiredService<IGameProcessTracker>()));
             services.AddSingleton<IGameInstallationWorkflow>(sp => sp.GetRequiredService<GameInstallationWorkflow>());
 
             services.AddSingleton<GameLaunchCoordinator>();
