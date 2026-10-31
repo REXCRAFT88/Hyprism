@@ -1,0 +1,37 @@
+# Local Together sessions
+
+The Together screen launches up to four licensed Hytale accounts in separate game instances on one Windows PC. Each player keeps their own account session, instance data, and input assignment.
+
+![Together screen with two official account slots, separate instances, a draggable layout preview, and controller options](/img/user/en/together.png)
+
+## Before you start
+
+- Use Windows x64 and install the matching game branch for every player.
+- Add each player's distinct official Hytale login account in [Profiles](/user-guide/profiles).
+- Sign in to each account and make sure each account owns the game.
+- Install a separate game instance for each player. This keeps saves, settings, and writable files separate.
+- Connect gamepads before opening Together, or assign one player to Keyboard & Mouse.
+
+Together uses the launcher's official sign-in and refresh flow. It does not bypass account ownership checks. All players must use the same game branch. Only one player can use Keyboard & Mouse, and each controller can be assigned once. If the same physical pad appears through both a native device and a virtual adapter, select one entry only.
+
+## Set up a session
+
+1. Open **Together** in the left navigation.
+2. Use the player cards to select an **Official account**, **Instance**, and **Controller** for each player. Add or remove cards with **Add player** and **Remove**.
+3. Select a **Display for all players** and a layout. Drag the player tiles to change which player occupies each position. The three-player asymmetric option gives the first player half the display and stacks the other two in the remaining half.
+4. Turn on the touchpad mouse option when the assigned controller supports it. Select how its menu button maps to Escape, and choose a light color. **Vibration test** briefly vibrates compatible controllers.
+5. Choose **Refresh controllers** if a connected pad does not appear.
+6. Select **Start local session**. Hyprism refreshes each official account in turn, starts its selected instance, assigns input to the launched process, and arranges the windows.
+7. Select **Stop input and restore windows** to detach controller input and return tracked windows to their saved position and style. Game processes remain open.
+
+The windows use the selected display's work area, leaving the taskbar visible. You can resize and move the game windows after launch. Stop the session before editing assignments or starting another Together session.
+
+## Troubleshooting
+
+- If an account needs to sign in again, open **Profiles**, complete official sign-in, then retry.
+- If an instance is missing, install or repair it from the [Instances](/user-guide/instances-profiles-mods) screen. Select a separate instance for each player.
+- If a controller is missing, reconnect it and refresh the list. Try a wired connection if its identity changes between connections.
+- A controller without advertised vibration or RGB LED support may ignore those optional controls.
+- Together controls local windows and input. It does not create a network multiplayer session or distribute game files.
+
+The preview build has not been verified with physical controllers or authenticated gameplay on every device. Hytale and its game files remain subject to the game's terms and license.

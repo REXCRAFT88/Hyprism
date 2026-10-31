@@ -31,7 +31,7 @@ public sealed class AvaloniaPerformanceTests
                 .ToList();
 
             Assert.InRange(visualCount, 1, 160);
-            Assert.Equal(4, deferredPages.Count);
+            Assert.Equal(5, deferredPages.Count);
             Assert.All(deferredPages, page => Assert.Null(page.Content));
             Assert.DoesNotContain(window.GetVisualDescendants(), visual => visual is InstancesView);
         }

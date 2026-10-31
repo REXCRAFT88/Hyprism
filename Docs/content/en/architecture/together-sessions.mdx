@@ -1,0 +1,23 @@
+# Together session flow
+
+The Windows Together screen composes existing profile, authentication, instance, launch, and process tracking services with the Hytale Together native input host.
+
+## Account and launch identity
+
+Each player binding stores a stable Hyprism profile ID, installed instance ID, controller identity, and supported controller options in `Together/players.json` under the application data directory. The file contains no access or refresh tokens. Account sessions remain in Hyprism's existing per-profile authentication storage.
+
+`ProfileLaunchContext` carries an explicit profile ID through asynchronous launch operations. The launcher resolves that ID instead of consulting mutable selected-profile UI state. The authenticator caches session objects by profile ID and resolves its current profile folder in the same ambient context. Together reloads and refreshes each account separately and checks that the returned owner ID still matches the profile's stored session before launching. It rejects repeated owner IDs in one session, requiring distinct official login accounts.
+
+Each player must choose a different installed instance so the game receives its own writable data directory. Players must use the same branch. The session starts launches sequentially, then locates the tracked process by both instance ID and profile ID.
+
+## Window and controller lifecycle
+
+Together waits asynchronously for the launched process window, captures its original bounds and style, attaches the controller host to the exact process ID, and places the window in the selected monitor work area. Stop and failure cleanup detach native input and restore bounds and style. Game processes stay open.
+
+The native host and SDL controller manager are bundled with their licenses. SDL discovery, LED changes, and vibration calls run on a dedicated worker thread. The native host runs as a child process with concurrent standard output and error drains, timeout, cancellation, and exit-code checks. The controller host source and its CMake build inputs are included under `Assets/Together/NativeSource`; the build script resolves SDL exports from a locally installed licensed Hytale client instead of distributing game files.
+
+Controller mappings retain background gamepad input, touchpad mouse, menu-to-Escape selection, vibration, and RGB options where the device supports them. A virtual controller can expose the same physical pad twice; the UI prevents assigning the same enumerated device ID twice, but cannot infer every driver-level alias.
+
+## Boundaries
+
+Together reuses official Hyprism OAuth/session refresh and game ownership checks. It does not introduce a second authentication implementation, write credentials to the player binding file, patch game binaries, or ship proprietary game data. It arranges local windows and input only; game networking and multiplayer rules remain owned by Hytale.

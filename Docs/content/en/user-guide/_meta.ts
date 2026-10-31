@@ -5,6 +5,7 @@ export default {
   icon: 'menu-book',
   'instances-profiles-mods': 'Instances',
   profiles: 'Profiles',
+  together: 'Together',
   mods: 'Mods',
   news: 'News',
   settings: 'Settings'

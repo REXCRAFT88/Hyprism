@@ -8,5 +8,6 @@ export default {
   desktop: 'Desktop',
   'desktop-ui': 'Desktop UI',
   'game-lifecycle': 'Game lifecycle',
+  'together-sessions': 'Together sessions',
   'data-and-cache': 'Data and cache'
 }

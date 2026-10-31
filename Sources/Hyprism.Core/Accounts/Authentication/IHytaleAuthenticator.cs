@@ -56,6 +56,12 @@ public interface IHytaleAuthenticator
     /// </summary>
     void ReloadSessionForCurrentProfile();
 
+    /// <summary>Returns a saved profile's official account owner ID without exposing token data.</summary>
+    /// <summary>Reads the owner identifier stored for an official profile without exposing its tokens.</summary>
+    /// <param name="profileId">The stable profile identifier whose cached account owner is requested.</param>
+    /// <returns>The cached owner identifier, or <see langword="null"/> when no session is stored.</returns>
+    string? GetStoredAccountOwnerId(string profileId);
+
     /// <summary>
     /// Gets a valid session from any official profile (not just the active one).
     /// Used for fetching version info when the current profile may not be official

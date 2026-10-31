@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-only
         xmlns:news="using:Hyprism.Desktop.Screens.News"
         xmlns:profiles="using:Hyprism.Desktop.Screens.Profiles"
         xmlns:settings="using:Hyprism.Desktop.Screens.Settings"
+        xmlns:together="using:Hyprism.Desktop.Screens.Together"
         xmlns:animation="using:Avalonia.Animation"
         xmlns:easing="using:Avalonia.Animation.Easings"
         xmlns:lottie="clr-namespace:Avalonia.Labs.Lottie;assembly=Avalonia.Labs.Lottie"
@@ -137,6 +138,16 @@ SPDX-License-Identifier: GPL-3.0-only
               <TextBlock VerticalAlignment="Center" Text="{Binding SettingsLabel}" />
             </StackPanel>
           </Button>
+
+          <Button Classes="nav"
+                  Classes.selected="{Binding IsTogether}"
+                  Command="{Binding NavigateCommand}"
+                  CommandParameter="together">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+              <TextBlock Width="21" Text="2×" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" />
+              <TextBlock VerticalAlignment="Center" Text="{Binding TogetherLabel}" />
+            </StackPanel>
+          </Button>
         </StackPanel>
 
         <Grid Grid.Row="2"
@@ -218,6 +229,15 @@ SPDX-License-Identifier: GPL-3.0-only
             <controls:DeferredContentControl.ContentTemplate>
               <DataTemplate x:DataType="profiles:ProfilesViewModel">
                 <profiles:ProfilesView />
+              </DataTemplate>
+            </controls:DeferredContentControl.ContentTemplate>
+          </controls:DeferredContentControl>
+
+          <controls:DeferredContentControl IsActive="{Binding IsTogether}"
+                                           DeferredContent="{Binding Together}">
+            <controls:DeferredContentControl.ContentTemplate>
+              <DataTemplate x:DataType="together:TogetherViewModel">
+                <together:TogetherView />
               </DataTemplate>
             </controls:DeferredContentControl.ContentTemplate>
           </controls:DeferredContentControl>

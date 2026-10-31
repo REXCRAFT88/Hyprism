@@ -1,0 +1,99 @@
+<!--
+Copyright (C) 2026 Hyprism Launcher
+SPDX-License-Identifier: GPL-3.0-only
+-->
+
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:together="using:Hyprism.Desktop.Screens.Together"
+             x:Class="Hyprism.Desktop.Screens.Together.TogetherView"
+             x:DataType="together:TogetherViewModel">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="30" Spacing="22">
+      <StackPanel Spacing="6">
+        <TextBlock Text="{Binding Title}" FontSize="28" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding Subtitle}" Classes="muted" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Border Classes="noteCard" Padding="18" IsEnabled="{Binding CanEditSession}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="{Binding ScreenDescription}" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding LayoutDescription}" Classes="muted" TextWrapping="Wrap" />
+          <Canvas x:Name="LayoutPreview" Width="480" Height="260" Background="#181B22" />
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding LayoutLabel}" VerticalAlignment="Center" />
+            <ComboBox Width="190" ItemsSource="{Binding Layouts}" SelectedValueBinding="{Binding Id}" SelectedValue="{Binding Layout}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="together:TogetherLayoutOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <ComboBox Width="260" ItemsSource="{Binding Displays}" SelectedItem="{Binding SelectedDisplay}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="together:TogetherDisplayOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="{Binding RefreshControllersLabel}" Command="{Binding RefreshControllersCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Players}" IsEnabled="{Binding CanEditSession}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="together:TogetherPlayerViewModel">
+            <Border Classes="noteCard" Padding="18" Margin="0,0,0,10">
+              <Grid ColumnDefinitions="Auto,*,*,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="10">
+                <TextBlock Text="{Binding Slot}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="6">
+                  <TextBlock Text="{Binding ProfileLabel}" Classes="muted" />
+                  <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" MinWidth="150">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="together:TogetherProfileOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="6">
+                  <TextBlock Text="{Binding InstanceLabel}" Classes="muted" />
+                  <ComboBox ItemsSource="{Binding Instances}" SelectedItem="{Binding SelectedInstance}" MinWidth="150">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="together:TogetherInstanceOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Spacing="6">
+                  <TextBlock Text="{Binding ControllerLabel}" Classes="muted" />
+                  <ComboBox ItemsSource="{Binding Controllers}" SelectedValueBinding="{Binding Id}" SelectedValue="{Binding ControllerId}" MinWidth="150">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="together:TogetherControllerOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+                <Button Grid.Column="4" Content="{Binding RemoveLabel}" Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="12">
+                  <CheckBox Content="{Binding TouchpadLabel}" IsChecked="{Binding TouchpadMouseEnabled}" VerticalAlignment="Center" />
+                  <ComboBox Width="190" ItemsSource="{Binding EscapeOptions}" SelectedValueBinding="{Binding Id}" SelectedValue="{Binding EscapeButtonMode}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="together:TogetherEscapeOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <ComboBox Width="150" ItemsSource="{Binding ColorOptions}" SelectedValueBinding="{Binding Id}" SelectedValue="{Binding Color}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="together:TogetherColorOption"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <Button Content="{Binding VibrationLabel}" Click="OnVibrationTestClick" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Content="{Binding AddPlayerLabel}" Command="{Binding AddPlayerCommand}" />
+        <Button Content="{Binding StartLabel}" Command="{Binding StartSessionCommand}" IsEnabled="{Binding CanStartSession}" />
+        <Button Content="{Binding StopLabel}" Command="{Binding StopSessionCommand}" />
+      </StackPanel>
+      <TextBlock Text="{Binding Status}" Classes="muted" TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -200,6 +200,9 @@ public partial class GameLauncher : IGameLauncher
         Logger.Info("Game", $"Preparing to launch from {versionPath}");
 
         var currentProfile = GetSelectedProfileOrThrow();
+        using var profileContext = ProfileLaunchContext.ProfileId is null
+            ? ProfileLaunchContext.Use(currentProfile.Id)
+            : null;
         string sessionUuid = currentProfile.UUID;
         string profileName = currentProfile.Name;
         bool isOfficialProfile = currentProfile.IsOfficial;
@@ -364,14 +367,15 @@ public partial class GameLauncher : IGameLauncher
 
     private Profile GetSelectedProfileOrThrow()
     {
-        if (string.IsNullOrWhiteSpace(CurrentConfig.SelectedProfileId))
+        var selectedProfileId = ProfileLaunchContext.ProfileId ?? CurrentConfig.SelectedProfileId;
+        if (string.IsNullOrWhiteSpace(selectedProfileId))
         {
             throw new InvalidOperationException("Create or select a profile before launching the game");
         }
 
         var profile = _profiles.GetProfiles()
-            .FirstOrDefault(candidate => candidate.Id == CurrentConfig.SelectedProfileId) ?? throw new InvalidOperationException(
-                $"Selected profile '{CurrentConfig.SelectedProfileId}' does not exist");
+            .FirstOrDefault(candidate => candidate.Id == selectedProfileId) ?? throw new InvalidOperationException(
+                $"Selected profile '{selectedProfileId}' does not exist");
         if (string.IsNullOrWhiteSpace(profile.Name) || !Guid.TryParse(profile.UUID, out _))
         {
             throw new InvalidOperationException(

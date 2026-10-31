@@ -10,9 +10,11 @@ using Hyprism.Desktop.Screens.Instances;
 using Hyprism.Desktop.Screens.News;
 using Hyprism.Desktop.Screens.Profiles;
 using Hyprism.Desktop.Screens.Settings;
+using Hyprism.Desktop.Screens.Together;
 using Hyprism.Desktop.Localization;
 using Hyprism.Desktop.Platform;
 using Hyprism.Core.Accounts;
+using Hyprism.Core;
 using Hyprism.Core.Application.Ports;
 using Hyprism.Core.Application.Progress;
 using Hyprism.Core.Game;
@@ -31,6 +33,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     private const string NewsPage = "news";
     private const string ProfilesPage = "profiles";
     private const string SettingsPage = "settings";
+    private const string TogetherPage = "together";
 
     private readonly IDesktopSettingsStore _settingsStore;
     private readonly IExternalUriLauncher _uriLauncher;
@@ -91,7 +94,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         RemoteImageCache? remoteImageCache = null,
         IGameConsoleService? gameConsole = null,
         IGpuProvider? gpuProvider = null,
-        LogSessionPaths? logSession = null)
+        LogSessionPaths? logSession = null,
+        AppPathConfiguration? appPath = null,
+        bool discoverTogetherControllers = true)
     {
         _instances = instances;
         _settingsStore = settingsStore;
@@ -135,6 +140,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
             gameConsole,
             logSession);
         Instances.PropertyChanged += OnInstancesPropertyChanged;
+        Together = authenticator is not null && appPath is not null
+            ? new TogetherViewModel(
+                profileRepository,
+                authenticator,
+                instances,
+                gameLaunchCoordinator,
+                gameProcess,
+                uriLauncher,
+                localizer,
+                appPath,
+                discoverTogetherControllers)
+            : null;
 
         UserName = profiles.GetNick();
         UserInitial = string.IsNullOrWhiteSpace(UserName)
@@ -152,6 +169,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     public ProfilesViewModel Profiles { get; }
     public NewsViewModel News { get; }
     public InstancesViewModel Instances { get; }
+    public TogetherViewModel? Together { get; }
     public OnboardingViewModel? Onboarding
     {
         get => _onboarding;
@@ -171,6 +189,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     public string NewsLabel => _localizer["dock.news"];
     public string ProfilesLabel => _localizer["dock.profiles"];
     public string SettingsLabel => _localizer["dock.settings"];
+    public string TogetherLabel => _localizer["dock.together"];
     public string StartupLoadingTitle => _localizer["startup.loading.title"];
     public string LauncherVersion => DesktopApplicationInfo.Version;
 
@@ -178,7 +197,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     public bool IsNews => CurrentPage == NewsPage;
     public bool IsProfiles => CurrentPage == ProfilesPage;
     public bool IsSettings => CurrentPage == SettingsPage;
-    public bool IsPlaceholderPage => !IsInstances && !IsNews && !IsProfiles && !IsSettings;
+    public bool IsTogether => CurrentPage == TogetherPage;
+    public bool IsPlaceholderPage => !IsInstances && !IsNews && !IsProfiles && !IsSettings && !IsTogether;
 
     [RelayCommand]
     private void Navigate(string? page)
@@ -189,6 +209,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
             NewsPage => NewsPage,
             ProfilesPage => ProfilesPage,
             SettingsPage => SettingsPage,
+            TogetherPage when Together is not null => TogetherPage,
             _ => InstancesPage
         };
 
@@ -198,6 +219,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
             NewsPage => NewsLabel,
             ProfilesPage => ProfilesLabel,
             SettingsPage => SettingsLabel,
+            TogetherPage => TogetherLabel,
             _ => InstancesLabel
         };
 
@@ -205,6 +227,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
 
         if (IsInstances)
             Instances.RefreshDownloadSourceAvailability();
+
+        if (IsTogether)
+            Together?.RefreshChoicesCommand.Execute(null);
 
         if (IsNews)
         {
@@ -280,6 +305,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         Profiles.RefreshLocalization();
         News.RefreshLocalization();
         Instances.RefreshLocalization();
+        Together?.RefreshChoicesCommand.Execute(null);
         AccountType = _isOfficialProfile
             ? _localizer["desktopSettings.accountHytale"]
             : _localizer["desktopSettings.accountOffline"];
@@ -289,6 +315,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
             NewsPage => NewsLabel,
             ProfilesPage => ProfilesLabel,
             SettingsPage => SettingsLabel,
+            TogetherPage => TogetherLabel,
             _ => InstancesLabel
         };
         OnPropertyChanged(string.Empty);
@@ -328,6 +355,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         OnPropertyChanged(nameof(IsNews));
         OnPropertyChanged(nameof(IsProfiles));
         OnPropertyChanged(nameof(IsSettings));
+        OnPropertyChanged(nameof(IsTogether));
         OnPropertyChanged(nameof(IsPlaceholderPage));
         OnPropertyChanged(nameof(IsNewsLandingVisible));
         OnPropertyChanged(nameof(IsNewsArticleVisible));
@@ -347,6 +375,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         Instances.PropertyChanged -= OnInstancesPropertyChanged;
         News.PropertyChanged -= OnNewsPropertyChanged;
         Instances.Dispose();
+        Together?.Dispose();
         News.Dispose();
         Profiles.Dispose();
         Settings.Dispose();

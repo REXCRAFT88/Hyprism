@@ -291,6 +291,63 @@ SPDX-License-Identifier: GPL-3.0-only
   <data name="dock.settings" xml:space="preserve">
     <value>Настройки</value>
   </data>
+  <data name="dock.together" xml:space="preserve"><value>Вместе</value></data>
+  <data name="together.title" xml:space="preserve"><value>Hytale Together</value></data>
+  <data name="together.subtitle" xml:space="preserve"><value>Запускайте отдельные официальные аккаунты в собственных экземплярах игры, назначайте контроллеры и размещайте игровые окна.</value></data>
+  <data name="together.addPlayer" xml:space="preserve"><value>Добавить игрока</value></data>
+  <data name="together.start" xml:space="preserve"><value>Начать локальную сессию</value></data>
+  <data name="together.stop" xml:space="preserve"><value>Отключить ввод и восстановить окна</value></data>
+  <data name="together.refreshControllers" xml:space="preserve"><value>Обновить контроллеры</value></data>
+  <data name="together.account" xml:space="preserve"><value>Официальный аккаунт</value></data>
+  <data name="together.instance" xml:space="preserve"><value>Экземпляр игры</value></data>
+  <data name="together.controller" xml:space="preserve"><value>Контроллер</value></data>
+  <data name="together.remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="together.screenPrimary" xml:space="preserve"><value>Локальная сессия Windows · основной экран</value></data>
+  <data name="together.display" xml:space="preserve"><value>Экран для всех игроков</value></data>
+  <data name="together.layout" xml:space="preserve"><value>Раскладка</value></data>
+  <data name="together.layoutGrid" xml:space="preserve"><value>Сетка</value></data>
+  <data name="together.layoutSideBySide" xml:space="preserve"><value>Рядом</value></data>
+  <data name="together.layoutAsymmetric" xml:space="preserve"><value>Асимметричная</value></data>
+  <data name="together.escapeNone" xml:space="preserve"><value>Кнопка меню без изменений</value></data>
+  <data name="together.escapeShare" xml:space="preserve"><value>Кнопка Share как Escape</value></data>
+  <data name="together.escapePs" xml:space="preserve"><value>Кнопка PS как Escape</value></data>
+  <data name="together.escapeBoth" xml:space="preserve"><value>Обе кнопки как Escape</value></data>
+  <data name="together.touchpad" xml:space="preserve"><value>Мышь на тачпаде</value></data>
+  <data name="together.vibrationTest" xml:space="preserve"><value>Проверить вибрацию</value></data>
+  <data name="together.stopWarning" xml:space="preserve"><value>При отключении контроллеров или восстановлении окна возникла ошибка:</value></data>
+  <data name="together.colorElectricCyan" xml:space="preserve"><value>Электрический циан</value></data>
+  <data name="together.colorWarmAmber" xml:space="preserve"><value>Тёплый янтарный</value></data>
+  <data name="together.colorNeonEmerald" xml:space="preserve"><value>Неоновый изумрудный</value></data>
+  <data name="together.colorRoyalPurple" xml:space="preserve"><value>Королевский пурпурный</value></data>
+  <data name="together.colorCrimsonRed" xml:space="preserve"><value>Багряный</value></data>
+  <data name="together.colorGoldenYellow" xml:space="preserve"><value>Золотистый</value></data>
+  <data name="together.colorHotPink" xml:space="preserve"><value>Ярко-розовый</value></data>
+  <data name="together.colorPureWhite" xml:space="preserve"><value>Белый</value></data>
+  <data name="together.colorOff" xml:space="preserve"><value>Выключено</value></data>
+  <data name="together.windowsOnly" xml:space="preserve"><value>Сессии Together пока доступны только в Windows.</value></data>
+  <data name="together.layoutPreview" xml:space="preserve"><value>Одно окно занимает рабочую область. Два окна располагаются рядом или сеткой. Для трёх доступна асимметричная раскладка. Четыре окна используют сетку 2 × 2. Окна не перекрывают панель задач.</value></data>
+  <data name="together.noProfiles" xml:space="preserve"><value>Перед началом сессии добавьте официальный аккаунт на странице «Профили».</value></data>
+  <data name="together.nativeMissing" xml:space="preserve"><value>Встроенный адаптер контроллера отсутствует. Восстановите установку лаунчера.</value></data>
+  <data name="together.noControllers" xml:space="preserve"><value>Геймпады не найдены. Подключите контроллер и обновите список или назначьте клавиатуру и мышь.</value></data>
+  <data name="together.controllerError" xml:space="preserve"><value>Не удалось найти контроллеры:</value></data>
+  <data name="together.controllerAttachFailed" xml:space="preserve"><value>Не удалось подключить контроллер к процессу</value></data>
+  <data name="together.nativeStartFailed" xml:space="preserve"><value>Не удалось запустить встроенный адаптер контроллера.</value></data>
+  <data name="together.launching" xml:space="preserve"><value>Обновление официальной сессии и запуск {0} ({1} из {2}).</value></data>
+  <data name="together.accountExpired" xml:space="preserve"><value>Для профиля {0} требуется действующий официальный вход. Войдите снова на странице «Профили».</value></data>
+  <data name="together.launchFailed" xml:space="preserve"><value>Игровой процесс для {0} не запустился.</value></data>
+  <data name="together.sessionRunning" xml:space="preserve"><value>Сессия запущена. Сохранения и настройки хранятся в выбранном экземпляре каждого игрока.</value></data>
+  <data name="together.cancelled" xml:space="preserve"><value>Запуск отменён. Ввод контроллеров отключён, окна восстановлены.</value></data>
+  <data name="together.startFailed" xml:space="preserve"><value>Не удалось запустить сессию:</value></data>
+  <data name="together.sessionStopped" xml:space="preserve"><value>Ввод контроллеров отключён, отслеживаемые окна игры восстановлены.</value></data>
+  <data name="together.playerCountError" xml:space="preserve"><value>Выберите от одного до четырёх игроков.</value></data>
+  <data name="together.selectAll" xml:space="preserve"><value>Выберите официальный аккаунт и установленный экземпляр для каждого игрока.</value></data>
+  <data name="together.selectController" xml:space="preserve"><value>Назначьте контроллер или клавиатуру и мышь каждому игроку.</value></data>
+  <data name="together.duplicateProfile" xml:space="preserve"><value>Для каждого игрока требуется отдельный профиль официального аккаунта.</value></data>
+  <data name="together.duplicateAccount" xml:space="preserve"><value>Каждому игроку нужен отдельный официальный аккаунт Hytale.</value></data>
+  <data name="together.duplicateInstance" xml:space="preserve"><value>Выберите отдельный установленный экземпляр для каждого игрока, чтобы разделить данные.</value></data>
+  <data name="together.duplicateController" xml:space="preserve"><value>Назначайте каждый геймпад только одному игроку.</value></data>
+  <data name="together.oneKeyboard" xml:space="preserve"><value>Клавиатуру и мышь может использовать только один игрок.</value></data>
+  <data name="together.sameBranch" xml:space="preserve"><value>У всех игроков должна быть выбрана одна ветка игры.</value></data>
   <data name="home.createInstance" xml:space="preserve">
     <value>Создать экземпляр</value>
   </data>

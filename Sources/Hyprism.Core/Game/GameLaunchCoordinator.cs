@@ -18,6 +18,7 @@ public sealed class GameLaunchCoordinator(
     IInstanceRepository instances,
     IProgressReporter progress) : IGameLaunchCoordinator
 {
+    private static readonly SemaphoreSlim ProfileLaunchGate = new(1, 1);
     private readonly HashSet<string> _launchingInstanceIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _launchLock = new();
     private const int ExitSuccess = 0;
@@ -110,6 +111,26 @@ public sealed class GameLaunchCoordinator(
                 lock (_launchLock)
                     _launchingInstanceIds.Remove(selectedInstance.Id);
             }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task LaunchProfileAsync(
+        string instanceId,
+        string profileId,
+        AuthUriPresenter? authorizationUriPresenter = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileId);
+        await ProfileLaunchGate.WaitAsync();
+        try
+        {
+            using var profile = ProfileLaunchContext.Use(profileId);
+            await LaunchAsync(instanceId, authorizationUriPresenter);
+        }
+        finally
+        {
+            ProfileLaunchGate.Release();
         }
     }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Net;
+using Hyprism.Core;
 using Hyprism.Core.Accounts;
 using Hyprism.Core.Application.Ports;
 using Hyprism.Core.Application.Progress;
@@ -12,6 +13,7 @@ using Hyprism.Core.Game.Mods;
 using Hyprism.Core.Game.Sources;
 using Hyprism.Core.Game.Versions;
 using Hyprism.Core.Models;
+using Hyprism.Core.Infrastructure;
 using Hyprism.Desktop.Integrations.GitHub;
 using Hyprism.Desktop.Screens.News;
 using Hyprism.Desktop.Screens.Settings;
@@ -35,7 +37,11 @@ internal static class MainWindowViewModelFactory
         string language = "en-US",
         bool emptyInstances = false,
         string? instancePath = null,
-        IModManager? modManager = null)
+        IModManager? modManager = null,
+        IHytaleAuthenticator? authenticator = null,
+        AppPathConfiguration? appPath = null,
+        bool discoverTogetherControllers = true,
+        bool includeTogetherFixtureAccounts = false)
     {
         var progress = new Mock<IProgressReporter>();
         var instances = new Mock<IInstanceRepository>();
@@ -71,6 +77,21 @@ internal static class MainWindowViewModelFactory
 
         instances.Setup(service => service.GetCachedInstances())
             .Returns(emptyInstances ? [] : [installedInstance, snapshotInstance]);
+        instances.Setup(service => service.GetInstalledInstances()).Returns(
+        [
+            new InstalledInstance
+            {
+                Id = "instance-aurora", Branch = "release", Version = 7,
+                Path = instancePath ?? "/tmp/hyprism-docs-instance", IsValid = true,
+                CustomName = "Aurora survival"
+            },
+            new InstalledInstance
+            {
+                Id = "instance-snapshot", Branch = "release", Version = 7,
+                Path = "/tmp/hyprism-docs-instance-2", IsValid = true,
+                CustomName = "Aurora guest"
+            }
+        ]);
         instances.Setup(service => service.GetSelectedInstance())
             .Returns(emptyInstances ? null : installedInstance);
         instances.Setup(service => service.GetInstancePathById(It.IsAny<string>()))
@@ -81,7 +102,7 @@ internal static class MainWindowViewModelFactory
 
         profile.Setup(service => service.GetNick()).Returns("Aurora");
         profileManagement.Setup(service => service.GetProfiles())
-            .Returns(
+            .Returns(() =>
             [
                 new Profile
                 {
@@ -93,10 +114,20 @@ internal static class MainWindowViewModelFactory
                 new Profile
                 {
                     Id = "profile-hytale",
-                    Name = "Hytale Account",
+                    Name = includeTogetherFixtureAccounts && language == "ru-RU" ? "Аккаунт Hytale" : "Hytale Account",
                     UUID = "9f3b7d2e6c8a4f0b1e5d7c9a3f1b6e8d",
                     IsOfficial = true
-                }
+                },
+                .. (!includeTogetherFixtureAccounts ? [] : new[]
+                {
+                    new Profile
+                    {
+                        Id = "profile-guest",
+                        Name = language == "ru-RU" ? "Гостевой аккаунт" : "Guest Account",
+                        UUID = "8e2d6c5b-4a39-4817-9625-1e0d3c7b9a6f",
+                        IsOfficial = true
+                    }
+                })
             ]);
         profileManagement.Setup(service => service.GetSelectedProfileId())
             .Returns("profile-aurora");
@@ -111,6 +142,7 @@ internal static class MainWindowViewModelFactory
 
         settings.SetupGet(service => service.Language).Returns(language);
         settings.SetupGet(service => service.GpuPreference).Returns("auto");
+        settings.SetupGet(service => service.HasCompletedOnboarding).Returns(true);
 
         gitHub.Setup(service => service.GetContributorsAsync()).ReturnsAsync(
         [
@@ -256,7 +288,10 @@ internal static class MainWindowViewModelFactory
             mirrorCatalog: mirrorCatalog,
             versionCatalog: versionCatalog,
             modManager: modManager,
-            gpuProvider: gpuProvider.Object);
+            gpuProvider: gpuProvider.Object,
+            authenticator: authenticator,
+            appPath: appPath,
+            discoverTogetherControllers: discoverTogetherControllers);
     }
 
     private sealed class TinyPngHandler : HttpMessageHandler

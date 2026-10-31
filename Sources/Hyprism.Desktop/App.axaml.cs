@@ -166,7 +166,8 @@ public sealed partial class App : Application
             services.GetRequiredService<RemoteImageCache>(),
             services.GetRequiredService<IGameConsoleService>(),
             services.GetRequiredService<IGpuProvider>(),
-            services.GetRequiredService<LogSessionPaths>());
+            services.GetRequiredService<LogSessionPaths>(),
+            services.GetRequiredService<AppPathConfiguration>());
 
     private static async Task InitializeCoreAsync(
         IServiceProvider services,

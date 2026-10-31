@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Collections.Concurrent;
 using Hyprism.Core.Models;
 using Hyprism.Core.Infrastructure;
 using Hyprism.Core.Integrations.Hytale;
@@ -49,7 +50,37 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// <summary>
     /// The current auth session, or null if not logged in
     /// </summary>
-    public HytaleAuthSession? CurrentSession { get; private set; }
+    private readonly ConcurrentDictionary<string, HytaleAuthSession> _profileSessions = new(StringComparer.Ordinal);
+    private HytaleAuthSession? _legacySession;
+
+    /// <summary>
+    /// The current authentication session, isolated by explicit launch profile or
+    /// the active launcher profile when no launch context is set.
+    /// </summary>
+    public HytaleAuthSession? CurrentSession
+    {
+        get
+        {
+            var profileId = ResolveCurrentProfileId();
+            return profileId is null
+                ? _legacySession
+                : _profileSessions.GetValueOrDefault(profileId);
+        }
+        private set
+        {
+            var profileId = ResolveCurrentProfileId();
+            if (profileId is null)
+            {
+                _legacySession = value;
+                return;
+            }
+
+            if (value is null)
+                _profileSessions.TryRemove(profileId, out _);
+            else
+                _profileSessions[profileId] = value;
+        }
+    }
 
     /// <summary>
     /// Creates the official Hytale authentication service and restores the current profile session
@@ -88,6 +119,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(authorizationUriPresenter);
+        using var profileContext = CaptureProfileContext();
 
         StopListener();
         using var listener = new HttpListener();
@@ -238,6 +270,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// <returns>A task that completes with the current valid authentication session, or null when unavailable</returns>
     public async Task<HytaleAuthSession?> GetValidSessionAsync()
     {
+        using var profileContext = CaptureProfileContext();
         if (CurrentSession == null) return null;
 
         if (CurrentSession.ExpiresAt <= DateTime.UtcNow.AddMinutes(1))
@@ -262,6 +295,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// <returns>A task that completes with true when the operation succeeds; otherwise false</returns>
     public async Task<bool> ForceRefreshAsync()
     {
+        using var profileContext = CaptureProfileContext();
         if (CurrentSession == null) return false;
 
         Logger.Info("HytaleAuth", "Forcing token refresh...");
@@ -285,6 +319,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// <returns>A task that completes with a fresh authentication session for launch, or null when unavailable</returns>
     public async Task<HytaleAuthSession?> EnsureFreshSessionForLaunchAsync()
     {
+        using var profileContext = CaptureProfileContext();
         var session = await GetValidSessionAsync();
         if (session == null) return null;
 
@@ -659,8 +694,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// </summary>
     private string? GetCurrentProfileFolder()
     {
-        var config = _configStore.Configuration;
-        var selectedId = config.SelectedProfileId;
+        var selectedId = ResolveCurrentProfileId();
         if (string.IsNullOrEmpty(selectedId))
             return null;
 
@@ -671,11 +705,39 @@ public class HytaleAuthenticator : IHytaleAuthenticator
         return LauncherUtilities.GetProfileFolderPath(_appDir, profile);
     }
 
+    private string? ResolveCurrentProfileId()
+    {
+        var profileId = ProfileLaunchContext.ProfileId ?? _configStore.Configuration.SelectedProfileId;
+        return string.IsNullOrWhiteSpace(profileId) ? null : profileId;
+    }
+
+    private IDisposable? CaptureProfileContext()
+    {
+        if (ProfileLaunchContext.ProfileId is not null)
+            return null;
+
+        var profileId = ResolveCurrentProfileId();
+        return profileId is null ? null : ProfileLaunchContext.Use(profileId);
+    }
+
     /// <summary>
     /// Gets the session file path for the current profile.
     /// Falls back to app root if no profile is active (legacy behavior)
     /// </summary>
     private string GetSessionFilePath() => TokenStore.GetSessionFilePath(GetCurrentProfileFolder(), _appDir);
+
+    /// <summary>Reads the owner identifier stored for an official profile without exposing its tokens.</summary>
+    /// <param name="profileId">The stable profile identifier whose cached account owner is requested.</param>
+    /// <returns>The cached owner identifier, or <see langword="null"/> when no session is stored.</returns>
+    public string? GetStoredAccountOwnerId(string profileId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileId);
+        var profile = ReadProfilesCache().FirstOrDefault(p => p.Id == profileId && p.IsOfficial);
+        if (profile is null) return null;
+        var profileFolder = LauncherUtilities.GetProfileFolderPath(_appDir, profile, createIfMissing: false);
+        var session = TokenStore.Load(TokenStore.GetSessionFilePath(profileFolder, _appDir));
+        return string.IsNullOrWhiteSpace(session?.AccountOwnerId) ? null : session.AccountOwnerId;
+    }
 
     /// <summary>
     /// Reloads session for the current profile. Call this after switching profiles
@@ -696,6 +758,7 @@ public class HytaleAuthenticator : IHytaleAuthenticator
     /// <returns>A task that completes with the valid official session, or null when unavailable</returns>
     public async Task<HytaleAuthSession?> GetValidOfficialSessionAsync(CancellationToken cancellationToken = default)
     {
+        using var profileContext = CaptureProfileContext();
         cancellationToken.ThrowIfCancellationRequested();
 
         if (CurrentSession != null)

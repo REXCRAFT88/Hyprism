@@ -3138,4 +3138,61 @@ Potrebbe essere necessario reinstallare il gioco se si cambia drive</value>
   <data name="instances.worlds.deleteHint" xml:space="preserve">
     <value>Eliminare «{0}» e tutti i dati di questo mondo? Questa azione non può essere annullata</value>
   </data>
+  <data name="dock.together" xml:space="preserve"><value>Together</value></data>
+  <data name="together.title" xml:space="preserve"><value>Hytale Together</value></data>
+  <data name="together.subtitle" xml:space="preserve"><value>Launch separate official accounts into their own instances, then assign a controller and arrange each game window.</value></data>
+  <data name="together.addPlayer" xml:space="preserve"><value>Add player</value></data>
+  <data name="together.start" xml:space="preserve"><value>Start local session</value></data>
+  <data name="together.stop" xml:space="preserve"><value>Stop input and restore windows</value></data>
+  <data name="together.refreshControllers" xml:space="preserve"><value>Refresh controllers</value></data>
+  <data name="together.account" xml:space="preserve"><value>Official account</value></data>
+  <data name="together.instance" xml:space="preserve"><value>Instance</value></data>
+  <data name="together.controller" xml:space="preserve"><value>Controller</value></data>
+  <data name="together.remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="together.screenPrimary" xml:space="preserve"><value>Windows local session · primary display</value></data>
+  <data name="together.display" xml:space="preserve"><value>Display for all players</value></data>
+  <data name="together.layout" xml:space="preserve"><value>Layout</value></data>
+  <data name="together.layoutGrid" xml:space="preserve"><value>Grid</value></data>
+  <data name="together.layoutSideBySide" xml:space="preserve"><value>Side by side</value></data>
+  <data name="together.layoutAsymmetric" xml:space="preserve"><value>Asymmetric</value></data>
+  <data name="together.escapeNone" xml:space="preserve"><value>Menu button unchanged</value></data>
+  <data name="together.escapeShare" xml:space="preserve"><value>Share button as Escape</value></data>
+  <data name="together.escapePs" xml:space="preserve"><value>PS button as Escape</value></data>
+  <data name="together.escapeBoth" xml:space="preserve"><value>Both buttons as Escape</value></data>
+  <data name="together.touchpad" xml:space="preserve"><value>Touchpad mouse</value></data>
+  <data name="together.vibrationTest" xml:space="preserve"><value>Test vibration</value></data>
+  <data name="together.stopWarning" xml:space="preserve"><value>Stopping controller input or restoring a game window reported an error:</value></data>
+  <data name="together.colorElectricCyan" xml:space="preserve"><value>Electric Cyan</value></data>
+  <data name="together.colorWarmAmber" xml:space="preserve"><value>Warm Amber</value></data>
+  <data name="together.colorNeonEmerald" xml:space="preserve"><value>Neon Emerald</value></data>
+  <data name="together.colorRoyalPurple" xml:space="preserve"><value>Royal Purple</value></data>
+  <data name="together.colorCrimsonRed" xml:space="preserve"><value>Crimson Red</value></data>
+  <data name="together.colorGoldenYellow" xml:space="preserve"><value>Golden Yellow</value></data>
+  <data name="together.colorHotPink" xml:space="preserve"><value>Hot Pink</value></data>
+  <data name="together.colorPureWhite" xml:space="preserve"><value>Pure White</value></data>
+  <data name="together.colorOff" xml:space="preserve"><value>Off</value></data>
+  <data name="together.windowsOnly" xml:space="preserve"><value>Together sessions are currently available on Windows.</value></data>
+  <data name="together.layoutPreview" xml:space="preserve"><value>One player fills the work area. Two use side-by-side or grid windows. Three can use an asymmetric layout. Four use a 2 × 2 grid. Windows stay above the taskbar.</value></data>
+  <data name="together.noProfiles" xml:space="preserve"><value>Add an official account in Profiles before starting a session.</value></data>
+  <data name="together.nativeMissing" xml:space="preserve"><value>The bundled controller adapter is missing. Repair the launcher installation before continuing.</value></data>
+  <data name="together.noControllers" xml:space="preserve"><value>No gamepads were found. Connect a controller and refresh, or assign Keyboard &amp; Mouse.</value></data>
+  <data name="together.controllerError" xml:space="preserve"><value>Could not enumerate controllers:</value></data>
+  <data name="together.controllerAttachFailed" xml:space="preserve"><value>Controller attachment failed for</value></data>
+  <data name="together.nativeStartFailed" xml:space="preserve"><value>Could not start the bundled controller adapter.</value></data>
+  <data name="together.launching" xml:space="preserve"><value>Refreshing the official account and launching {0} ({1} of {2}).</value></data>
+  <data name="together.accountExpired" xml:space="preserve"><value>{0} needs a valid official login. Sign in again from Profiles.</value></data>
+  <data name="together.launchFailed" xml:space="preserve"><value>The game process for {0} did not start.</value></data>
+  <data name="together.sessionRunning" xml:space="preserve"><value>Session running. Game saves and settings stay in each selected instance.</value></data>
+  <data name="together.cancelled" xml:space="preserve"><value>Session start cancelled. Controller input was stopped and windows were restored.</value></data>
+  <data name="together.startFailed" xml:space="preserve"><value>Could not start the session:</value></data>
+  <data name="together.sessionStopped" xml:space="preserve"><value>Controller input stopped and tracked game windows restored.</value></data>
+  <data name="together.playerCountError" xml:space="preserve"><value>Choose between one and four players.</value></data>
+  <data name="together.selectAll" xml:space="preserve"><value>Select an official account and installed instance for each player.</value></data>
+  <data name="together.selectController" xml:space="preserve"><value>Assign a controller or Keyboard &amp; Mouse to every player.</value></data>
+  <data name="together.duplicateProfile" xml:space="preserve"><value>Each player needs a separate official account profile.</value></data>
+  <data name="together.duplicateAccount" xml:space="preserve"><value>Each player needs a separate official Hytale login account.</value></data>
+  <data name="together.duplicateInstance" xml:space="preserve"><value>Each player needs a separate installed instance to keep saved data apart.</value></data>
+  <data name="together.duplicateController" xml:space="preserve"><value>Assign each gamepad to only one player.</value></data>
+  <data name="together.oneKeyboard" xml:space="preserve"><value>Only one player can use Keyboard &amp; Mouse.</value></data>
+  <data name="together.sameBranch" xml:space="preserve"><value>All players must use the same game branch.</value></data>
 </root>

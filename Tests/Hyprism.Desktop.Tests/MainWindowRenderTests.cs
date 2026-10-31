@@ -2561,7 +2561,7 @@ public sealed class MainWindowRenderTests
                     Title = "PRE-RELEASE PATCH NOTES (UPDATE 7)",
                     Excerpt = "A closer look at the world, its creatures, and the systems behind exploration.",
                     Url = "https://hytale.com/news/preview",
-                    Date = "2026-08-05",
+                    Date = "2026-08-05T12:00:00Z",
                     Author = "Hytale Team"
                 },
                 new NewsItemResponse
@@ -2595,7 +2595,7 @@ public sealed class MainWindowRenderTests
                 Title = "PRE-RELEASE PATCH NOTES (UPDATE 7)",
                 Excerpt = "A closer look at the world and its creatures.",
                 Url = "https://hytale.com/news/2026/8/new-adventure",
-                PublishedAt = "2026-08-05",
+                PublishedAt = "2026-08-05T12:00:00Z",
                 Author = "Hytale Team",
                 Categories = ["Game Update", "World Design"],
                 Content =

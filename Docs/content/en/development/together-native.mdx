@@ -1,0 +1,15 @@
+# Together native components
+
+The Windows Together feature ships the Hytale Together input host, its SDL runtime, and the controller manager in `Sources/Hyprism.Desktop/Assets/Together`. Native binaries and their matching SDL DLL are copied unchanged from Hytale Together 0.3.4. The source distribution contains the corresponding native source tree, CMake inputs, and `Build.ps1` under `NativeSource`.
+
+The native source comes from the `REXCRAFT88/Hytale-Together` project. Its adapter is MIT licensed. SDL and MinHook retain their own license terms, included next to the native source and binary assets. Hyprism's integration code remains GPL-3.0-only. Preserve all notices when changing or redistributing these components.
+
+## Rebuild the native host
+
+Run `NativeSource/Build.ps1` from PowerShell on Windows with Visual Studio 2022 C++ Build Tools, CMake, and a locally installed licensed Hytale client. Supply the folder containing `HytaleClient.exe`. The script extracts an SDL import library from that client's `SDL3.dll`, builds the native components for x64, and leaves outputs under `NativeSource/build`. It does not copy game files into the launcher.
+
+Review the resulting binaries and confirm that the adapter and launcher use the same SDL API before updating bundled files. The UI and runtime require the input host at `Assets/Together/HytaleInputHost.exe` and SDL beside it at `Assets/Together/SDL3.dll`.
+
+## Verify the integration
+
+Build the solution with the repository's .NET 10 SDK and run the focused profile-context and authenticator tests. The account-context regression test must load account A, switch explicitly to B across an asynchronous yield, then verify both sessions stay associated with their own profile IDs. A release checklist must distinguish build/test results from physical-controller and authenticated-gameplay testing.

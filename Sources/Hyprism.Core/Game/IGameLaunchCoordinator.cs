@@ -27,6 +27,12 @@ public interface IGameLaunchCoordinator
     Task LaunchAsync(
         string? instanceId = null,
         AuthUriPresenter? authorizationUriPresenter = null);
+
+    /// <summary>Launches a specific instance using a specific saved account profile.</summary>
+    Task LaunchProfileAsync(
+        string instanceId,
+        string profileId,
+        AuthUriPresenter? authorizationUriPresenter = null);
 }
 
 /// <summary>

@@ -12,6 +12,63 @@ namespace Hyprism.Core.Tests.Accounts.Authentication;
 public sealed class HytaleAuthenticatorTests
 {
     [Fact]
+    public async Task ExplicitProfileContext_LoadsTheMatchingSessionAfterAnotherProfileWasCached()
+    {
+        var appDir = Path.Combine(Path.GetTempPath(), $"hyprism-profile-auth-{Guid.NewGuid():N}");
+        var profiles = new[]
+        {
+            new Profile { Id = Guid.NewGuid().ToString(), UUID = Guid.NewGuid().ToString(), Name = "Player A", IsOfficial = true },
+            new Profile { Id = Guid.NewGuid().ToString(), UUID = Guid.NewGuid().ToString(), Name = "Player B", IsOfficial = true }
+        };
+
+        try
+        {
+            var profilesDir = LauncherUtilities.GetProfilesRoot(appDir);
+            await File.WriteAllTextAsync(Path.Combine(profilesDir, "profiles.json"), JsonSerializer.Serialize(profiles));
+            for (var i = 0; i < profiles.Length; i++)
+            {
+                var profileDir = LauncherUtilities.GetProfileFolderPath(appDir, profiles[i]);
+                await File.WriteAllTextAsync(
+                    Path.Combine(profileDir, "HytaleSession.json"),
+                    JsonSerializer.Serialize(new HytaleAuthSession
+                    {
+                        AccessToken = $"token-{i}",
+                        RefreshToken = $"refresh-{i}",
+                        ExpiresAt = DateTime.UtcNow.AddHours(1),
+                        UUID = profiles[i].UUID,
+                        AccountOwnerId = $"owner-{i}"
+                    }));
+            }
+
+            var config = new Mock<IConfigStore>();
+            config.SetupGet(service => service.Configuration).Returns(new Config { SelectedProfileId = profiles[0].Id });
+            using var httpClient = new HttpClient();
+            var auth = new HytaleAuthenticator(httpClient, appDir, config.Object);
+
+            using (ProfileLaunchContext.Use(profiles[0].Id))
+            {
+                auth.ReloadSessionForCurrentProfile();
+                Assert.Equal("owner-0", auth.CurrentSession?.AccountOwnerId);
+            }
+
+            using (ProfileLaunchContext.Use(profiles[1].Id))
+            {
+                auth.ReloadSessionForCurrentProfile();
+                await Task.Yield();
+                Assert.Equal("owner-1", auth.CurrentSession?.AccountOwnerId);
+                Assert.Equal("owner-1", auth.GetStoredAccountOwnerId(profiles[1].Id));
+            }
+
+            using (ProfileLaunchContext.Use(profiles[0].Id))
+                Assert.Equal("owner-0", auth.CurrentSession?.AccountOwnerId);
+        }
+        finally
+        {
+            if (Directory.Exists(appDir)) Directory.Delete(appDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void SessionJson_WritesPascalCaseAndReadsLegacySnakeCase()
     {
         var session = new HytaleAuthSession

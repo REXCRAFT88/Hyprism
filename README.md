@@ -68,6 +68,12 @@ dotnet run --project Sources/Hyprism.Desktop/Hyprism.Desktop.csproj
 
 Hyprism uses a .NET 10 Core library and a native Avalonia 12 desktop application
 
+## Local Together sessions (preview)
+
+The `REXCRAFT88/Hyprism` fork adds a Windows x64 Together screen for up to four local players. Each player selects a distinct official Hytale account, a separate installed game instance, and a controller. The screen arranges windows on a selected display and supports controller input options where available. Every account must own the game and complete official sign-in; the feature does not bypass Hytale ownership checks or create network multiplayer sessions. See the English and Russian [Together user guide](Docs/content/en/user-guide/together.mdx).
+
+The Together controller host is included with its corresponding SDL runtime and licenses. Native source and build inputs are under `Sources/Hyprism.Desktop/Assets/Together/NativeSource`. No Hytale game files or account credentials are distributed.
+
 ## Docs
 
 The English and Russian documentation is available on the [Hyprism documentation site](https://hyprism.org/Hyprism/docs/). Its sources live in [`Docs/content`](Docs/content)
