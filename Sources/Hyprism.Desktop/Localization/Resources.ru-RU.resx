@@ -293,7 +293,7 @@ SPDX-License-Identifier: GPL-3.0-only
   </data>
   <data name="dock.together" xml:space="preserve"><value>Вместе</value></data>
   <data name="together.title" xml:space="preserve"><value>Hytale Together</value></data>
-  <data name="together.subtitle" xml:space="preserve"><value>Запускайте отдельные официальные аккаунты в собственных экземплярах игры, назначайте контроллеры и размещайте игровые окна.</value></data>
+  <data name="together.subtitle" xml:space="preserve"><value>Запускайте официальные аккаунты из одной установленной ветки игры с отдельными сохранениями и настройками для каждого аккаунта.</value></data>
   <data name="together.addPlayer" xml:space="preserve"><value>Добавить игрока</value></data>
   <data name="together.start" xml:space="preserve"><value>Начать локальную сессию</value></data>
   <data name="together.stop" xml:space="preserve"><value>Отключить ввод и восстановить окна</value></data>

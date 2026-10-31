@@ -5,6 +5,10 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Hyprism Together preview
 
+## Preview 3
+
+- Corrected the Russian Together subtitle and refreshed its screenshot to describe one shared installation.
+
 ## Preview 2
 
 - All players can launch from one installed game instance and branch.
