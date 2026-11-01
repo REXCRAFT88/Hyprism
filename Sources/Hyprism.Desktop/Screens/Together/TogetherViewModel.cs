@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia.Threading;
 using Hyprism.Core;
 using Hyprism.Core.Accounts;
 using Hyprism.Core.Application.Ports;
@@ -31,6 +32,10 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
     private readonly IExternalUriLauncher _uriLauncher;
     private readonly StringLocalizer _localizer;
     private readonly string _appDir;
+    private readonly Func<CancellationToken, Task<string>> _controllerDiscovery;
+    private readonly bool _hasCustomControllerDiscovery;
+    private readonly bool _discoverControllersOnStartup;
+    private bool _controllerDiscoveryStarted;
     private readonly string _nativeHostPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Together", "HytaleInputHost.exe");
     private readonly object _sessionGate = new();
     private readonly List<PlayerWindow> _sessionWindows = [];
@@ -92,7 +97,8 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
         IExternalUriLauncher uriLauncher,
         StringLocalizer localizer,
         AppPathConfiguration appPath,
-        bool discoverControllers = true)
+        bool discoverControllers = true,
+        Func<CancellationToken, Task<string>>? controllerDiscovery = null)
     {
         _profiles = profiles;
         _authenticator = authenticator;
@@ -102,12 +108,23 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
         _uriLauncher = uriLauncher;
         _localizer = localizer;
         _appDir = appPath.AppDir;
+        _hasCustomControllerDiscovery = controllerDiscovery is not null;
+        _controllerDiscovery = controllerDiscovery ?? (token => RunNativeHostCheckedAsync(token, "devices"));
+        _discoverControllersOnStartup = discoverControllers;
         _localizer.LanguageChanged += OnLanguageChanged;
         RefreshLocalizedChoices();
         RefreshDisplays();
         LoadSavedPlayers();
         RefreshChoices();
-        if (discoverControllers) RefreshControllersCommand.Execute(null);
+    }
+
+    public void BeginControllerDiscovery()
+    {
+        if (!_discoverControllersOnStartup || _controllerDiscoveryStarted)
+            return;
+
+        _controllerDiscoveryStarted = true;
+        RefreshControllersCommand.Execute(null);
     }
 
     public string Title => _localizer["together.title"];
@@ -174,32 +191,55 @@ public sealed partial class TogetherViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task RefreshControllersAsync()
     {
-        Controllers.Clear();
-        if (!IsWindows || !File.Exists(_nativeHostPath))
-        {
-            Status = _localizer["together.nativeMissing"];
-            return;
-        }
-
         try
         {
-            var output = await RunNativeHostCheckedAsync(CancellationToken.None, "devices");
-
-            foreach (var line in output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+            if (!IsWindows || (!_hasCustomControllerDiscovery && !File.Exists(_nativeHostPath)))
             {
-                var parts = line.Split("  ", 2, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length == 2 && parts[0].Length == 16 && parts[0].All(Uri.IsHexDigit))
-                    Controllers.Add(new TogetherControllerOption(parts[0].ToLowerInvariant(), parts[1].Trim()));
+                await OnUiThreadAsync(() =>
+                {
+                    Controllers.Clear();
+                    Status = _localizer["together.nativeMissing"];
+                });
+                return;
             }
 
-            foreach (var player in Players)
-                player.SetControllers(Controllers.ToArray());
-            Status = Controllers.Count == 0 ? _localizer["together.noControllers"] : string.Empty;
+            var output = await _controllerDiscovery(CancellationToken.None).ConfigureAwait(false);
+            var foundControllers = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Split("  ", 2, StringSplitOptions.RemoveEmptyEntries))
+                .Where(parts => parts.Length == 2 && parts[0].Length == 16 && parts[0].All(Uri.IsHexDigit))
+                .Select(parts => new TogetherControllerOption(parts[0].ToLowerInvariant(), parts[1].Trim()))
+                .ToArray();
+
+            await OnUiThreadAsync(() =>
+            {
+                Controllers.Clear();
+                foreach (var controller in foundControllers)
+                    Controllers.Add(controller);
+
+                foreach (var player in Players)
+                    player.SetControllers(Controllers.ToArray());
+                Status = Controllers.Count == 0 ? _localizer["together.noControllers"] : string.Empty;
+            });
         }
         catch (Exception exception)
         {
-            Status = $"{_localizer["together.controllerError"]} {RedactPath(exception.Message)}";
+            await OnUiThreadAsync(() =>
+            {
+                Controllers.Clear();
+                Status = $"{_localizer["together.controllerError"]} {RedactPath(exception.Message)}";
+            });
         }
+    }
+
+    private static async Task OnUiThreadAsync(Action action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        await Dispatcher.UIThread.InvokeAsync(action);
     }
 
     [RelayCommand(CanExecute = nameof(CanStartSession))]

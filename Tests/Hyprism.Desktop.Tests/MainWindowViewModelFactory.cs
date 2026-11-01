@@ -41,7 +41,8 @@ internal static class MainWindowViewModelFactory
         IHytaleAuthenticator? authenticator = null,
         AppPathConfiguration? appPath = null,
         bool discoverTogetherControllers = true,
-        bool includeTogetherFixtureAccounts = false)
+        bool includeTogetherFixtureAccounts = false,
+        Func<CancellationToken, Task<string>>? controllerDiscovery = null)
     {
         var progress = new Mock<IProgressReporter>();
         var instances = new Mock<IInstanceRepository>();
@@ -291,7 +292,8 @@ internal static class MainWindowViewModelFactory
             gpuProvider: gpuProvider.Object,
             authenticator: authenticator,
             appPath: appPath,
-            discoverTogetherControllers: discoverTogetherControllers);
+            discoverTogetherControllers: discoverTogetherControllers,
+            controllerDiscovery: controllerDiscovery);
     }
 
     private sealed class TinyPngHandler : HttpMessageHandler

@@ -25,6 +25,16 @@ internal static class Program
     public static void Main(string[] args)
     {
         Logger.CaptureOriginalConsole();
+        AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+        {
+            if (eventArgs.ExceptionObject is Exception exception)
+                StartupFailureReporter.Write(exception, "unhandled process exception");
+        };
+        TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+        {
+            StartupFailureReporter.Write(eventArgs.Exception, "unobserved background task exception");
+            eventArgs.SetObserved();
+        };
         LauncherUserAgent.ConfigureVersion(DesktopApplicationInfo.Version);
         DesktopRuntime.Services = Bootstrapper.Initialize(services =>
         {
@@ -52,7 +62,16 @@ internal static class Program
                     provider.GetRequiredService<IDesktopSettingsStore>()));
         });
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception exception)
+        {
+            var reportPath = StartupFailureReporter.Write(exception, "desktop lifetime startup");
+            Logger.Error("Startup", $"Desktop lifetime failed ({exception.GetType().Name}). Diagnostic file: {reportPath}.");
+            throw;
+        }
     }
 
     public static AppBuilder BuildAvaloniaApp()

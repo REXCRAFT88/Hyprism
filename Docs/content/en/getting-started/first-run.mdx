@@ -49,3 +49,5 @@ See [Profiles](/user-guide/profiles) for authentication modes and profile manage
 See [Instances](/user-guide/instances-profiles-mods) for installation, launch, and deletion behavior.
 
 The defaults suit most systems. Before downloading, review **Settings → Java** if you need a custom Java executable or memory limits, **Settings → General → Game GPU** if you have multiple graphics adapters, and **Settings → Network** if you use an offline profile.
+
+If startup stops before the launcher opens, send the newest `launcher.log` from `%LOCALAPPDATA%\Hyprism\Logs`. A captured startup exception also writes `startup-failure.log` in that folder. If you selected a custom data folder with `HYPRISM_DATA`, look in its `Logs` subfolder instead. These reports redact common credential values.

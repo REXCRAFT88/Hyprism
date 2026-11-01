@@ -8,14 +8,16 @@ namespace Hyprism.Desktop.Shell;
 /// <summary>
 /// Provides the existing startup screen while Core migrates local data.
 /// </summary>
-public sealed class StartupLoadingViewModel : IStartupLoadingState
+public sealed class StartupLoadingViewModel : CommunityToolkit.Mvvm.ComponentModel.ObservableObject, IStartupLoadingState
 {
+    private string _startupLoadingStatus;
+
     /// <summary>Creates the loading-screen state from the current localization</summary>
     public StartupLoadingViewModel(StringLocalizer localizer)
     {
         ArgumentNullException.ThrowIfNull(localizer);
         StartupLoadingTitle = localizer["startup.loading.title"];
-        StartupLoadingStatus = localizer["startup.loading.content"];
+        _startupLoadingStatus = localizer["startup.loading.content"];
     }
 
     /// <inheritdoc/>
@@ -25,5 +27,12 @@ public sealed class StartupLoadingViewModel : IStartupLoadingState
     public string StartupLoadingTitle { get; }
 
     /// <inheritdoc/>
-    public string StartupLoadingStatus { get; }
+    public string StartupLoadingStatus
+    {
+        get => _startupLoadingStatus;
+        private set => SetProperty(ref _startupLoadingStatus, value);
+    }
+
+    public void ReportFailure(string reportPath)
+        => StartupLoadingStatus = $"Startup could not finish. Diagnostic file: {reportPath}";
 }

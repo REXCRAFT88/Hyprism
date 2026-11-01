@@ -96,7 +96,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         IGpuProvider? gpuProvider = null,
         LogSessionPaths? logSession = null,
         AppPathConfiguration? appPath = null,
-        bool discoverTogetherControllers = true)
+        bool discoverTogetherControllers = true,
+        Func<CancellationToken, Task<string>>? controllerDiscovery = null)
     {
         _instances = instances;
         _settingsStore = settingsStore;
@@ -150,7 +151,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
                 uriLauncher,
                 localizer,
                 appPath,
-                discoverTogetherControllers)
+                discoverTogetherControllers,
+                controllerDiscovery)
             : null;
 
         UserName = profiles.GetNick();
@@ -246,6 +248,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         IsStartupLoading = true;
     }
 
+    public void BeginStartupHardwareDiscovery()
+        => Together?.BeginControllerDiscovery();
+
     public void BeginOnboardingIfNeeded()
     {
         if (_settingsStore.HasCompletedOnboarding || Profiles.HasProfiles ||
@@ -282,6 +287,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
 
     public void CompleteStartupLoading()
         => IsStartupLoading = false;
+
+    public void ReportStartupFailure(string reportPath)
+    {
+        StartupLoadingStatus = $"Startup could not finish. Diagnostic file: {reportPath}";
+        IsStartupLoading = false;
+    }
 
     private SettingsViewModel CreateSettingsViewModel(IProfileRepository profileRepository)
         => new(

@@ -31,6 +31,9 @@ public sealed partial class App : Application
     private MainWindowViewModel? _mainWindowViewModel;
     private readonly CancellationTokenSource _bootstrapCancellation = new();
     private Task? _bootstrapTask;
+    private string _startupPhase = "framework initialization";
+    private bool _startupCompleted;
+    private bool _uiFailureReported;
 
     public override void Initialize()
         => AvaloniaXamlLoader.Load(this);
@@ -39,6 +42,7 @@ public sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            Dispatcher.UIThread.UnhandledException += OnUiUnhandledException;
             var services = DesktopRuntime.Services;
             var settings = services.GetRequiredService<IDesktopSettingsStore>();
             DesktopTheme.Apply(settings.Theme);
@@ -90,51 +94,107 @@ public sealed partial class App : Application
         StringLocalizer localizer,
         CancellationToken cancellationToken)
     {
-        await Task.Run(
-            async () =>
-            {
-                services.GetRequiredService<IDiscordPresence>().Initialize();
-                await InitializeCoreAsync(services, cancellationToken).ConfigureAwait(false);
-            },
-            cancellationToken);
-
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        var created = await Task.Run(
-            () => CreateMainWindowViewModel(
-                services,
-                settings,
-                uriLauncher,
-                filePicker,
-                localizer),
-            cancellationToken);
-
-        var viewModel = await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            created.BeginStartupLoading();
-            mainWindow.DataContext = created;
-            _mainWindowViewModel = created;
-            return created;
-        });
-
-        var minimumVisibleTime = Task.Delay(TimeSpan.FromMilliseconds(950), cancellationToken);
+        MainWindowViewModel? viewModel = null;
         try
         {
+            _startupPhase = "background services";
+            Logger.Info("Startup", $"Phase started: {_startupPhase}");
+            await Task.Run(
+                async () =>
+                {
+                    services.GetRequiredService<IDiscordPresence>().Initialize();
+                    await InitializeCoreAsync(services, cancellationToken).ConfigureAwait(false);
+                },
+                cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            _startupPhase = "main window model construction";
+            Logger.Info("Startup", $"Phase started: {_startupPhase}");
+            var created = await Task.Run(
+                () => CreateMainWindowViewModel(
+                    services,
+                    settings,
+                    uriLauncher,
+                    filePicker,
+                    localizer),
+                cancellationToken);
+
+            _startupPhase = "main window UI handoff";
+            Logger.Info("Startup", $"Phase started: {_startupPhase}");
+            viewModel = await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                created.BeginStartupLoading();
+                mainWindow.DataContext = created;
+                _mainWindowViewModel = created;
+                created.BeginStartupHardwareDiscovery();
+                return created;
+            });
+
+            _startupPhase = "startup data preload";
+            Logger.Info("Startup", $"Phase started: {_startupPhase}");
+            var minimumVisibleTime = Task.Delay(TimeSpan.FromMilliseconds(950), cancellationToken);
             await Task.WhenAll(
                 PreloadDynamicContentAsync(viewModel, cancellationToken),
                 minimumVisibleTime);
+
+            _startupPhase = "final startup UI transition";
+            Logger.Info("Startup", $"Phase started: {_startupPhase}");
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                viewModel.BeginOnboardingIfNeeded();
+                viewModel.CompleteStartupLoading();
+            });
+            _startupCompleted = true;
+            Logger.Info("Startup", "Startup completed successfully");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return;
         }
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
+        catch (Exception exception)
         {
-            viewModel.BeginOnboardingIfNeeded();
-            viewModel.CompleteStartupLoading();
-        });
+            var reportPath = StartupFailureReporter.Write(exception, _startupPhase);
+            Logger.Error("Startup", $"Startup failed during {_startupPhase} ({exception.GetType().Name}). Diagnostic file: {reportPath}.");
+            try
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    if (viewModel is not null)
+                        viewModel.ReportStartupFailure(reportPath);
+                    else if (mainWindow.DataContext is StartupLoadingViewModel loading)
+                        loading.ReportFailure(reportPath);
+                });
+            }
+            catch (Exception reportingException)
+            {
+                StartupFailureReporter.Write(reportingException, "startup failure UI reporting");
+            }
+        }
+    }
+
+    private void OnUiUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        if (_uiFailureReported)
+            return;
+
+        _uiFailureReported = true;
+        var reportPath = StartupFailureReporter.Write(e.Exception, _startupPhase);
+        Logger.Error("Startup", $"Unhandled UI exception during {_startupPhase} ({e.Exception.GetType().Name}). Diagnostic file: {reportPath}.");
+        if (_startupCompleted)
+            return;
+
+        e.Handled = true;
+        try
+        {
+            if (_mainWindowViewModel is not null)
+                _mainWindowViewModel.ReportStartupFailure(reportPath);
+        }
+        catch
+        {
+            e.Handled = false;
+        }
     }
 
     private static MainWindowViewModel CreateMainWindowViewModel(

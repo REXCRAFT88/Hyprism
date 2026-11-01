@@ -19,6 +19,65 @@ namespace Hyprism.Desktop.Tests;
 public sealed class TogetherViewRenderTests
 {
     [AvaloniaFact]
+    public async Task ProductionTogetherStartupKeepsShellAliveWhenControllerDiscoveryFails()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"hyprism-controller-startup-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        using var httpClient = new HttpClient();
+        using var viewModel = await Task.Run(() => MainWindowViewModelFactory.Create(
+            httpClient,
+            authenticator: new Mock<IHytaleAuthenticator>().Object,
+            appPath: new AppPathConfiguration(root),
+            discoverTogetherControllers: true,
+            controllerDiscovery: _ => Task.FromException<string>(new InvalidOperationException("fixture discovery failure"))));
+        Assert.Null(viewModel.Together!.RefreshControllersCommand.ExecutionTask);
+        var window = new MainWindow { DataContext = viewModel, Width = 900, Height = 600 };
+        window.Show();
+        viewModel.BeginStartupHardwareDiscovery();
+        await viewModel.Together!.RefreshControllersCommand.ExecutionTask!;
+
+        Assert.NotNull(viewModel.Together);
+        Assert.Contains("fixture discovery failure", viewModel.Together!.Status, StringComparison.Ordinal);
+        Assert.Empty(viewModel.Together.Controllers);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ControllerDiscoveryCompletingAfterShellBindingUpdatesCollectionsOnUiThread()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"hyprism-controller-ui-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        using var httpClient = new HttpClient();
+        var discovery = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var viewModel = await Task.Run(() => MainWindowViewModelFactory.Create(
+            httpClient,
+            authenticator: new Mock<IHytaleAuthenticator>().Object,
+            appPath: new AppPathConfiguration(root),
+            discoverTogetherControllers: true,
+            controllerDiscovery: _ => discovery.Task));
+        Assert.Null(viewModel.Together!.RefreshControllersCommand.ExecutionTask);
+        var window = new MainWindow { DataContext = viewModel, Width = 900, Height = 600 };
+        window.Show();
+        var collectionChangesOnUiThread = true;
+        var commandNotificationsOnUiThread = true;
+        viewModel.Together!.Controllers.CollectionChanged += (_, _) =>
+            collectionChangesOnUiThread &= Dispatcher.UIThread.CheckAccess();
+        viewModel.Together.RefreshControllersCommand.CanExecuteChanged += (_, _) =>
+            commandNotificationsOnUiThread &= Dispatcher.UIThread.CheckAccess();
+        viewModel.BeginStartupHardwareDiscovery();
+        discovery.SetResult($"0123456789abcdef  Fixture Pad{Environment.NewLine}");
+
+        await viewModel.Together!.RefreshControllersCommand.ExecutionTask!;
+
+        var controller = Assert.Single(viewModel.Together.Controllers);
+        Assert.Equal("0123456789abcdef", controller.Id);
+        Assert.Equal("Fixture Pad", controller.Name);
+        Assert.True(collectionChangesOnUiThread);
+        Assert.True(commandNotificationsOnUiThread);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task TogetherViewRendersWithIsolatedSampleDataInEnglishAndRussian()
     {
         var dataRoot = Environment.GetEnvironmentVariable("HYPRISM_DATA")
